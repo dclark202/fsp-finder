@@ -66,6 +66,23 @@ a:hover {
     border-color: #8ab4f8;
 }
 
+.remove-file-btn {
+    margin-left: 15px;
+    padding: 2px 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #999;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.remove-file-btn:hover {
+    color: #000;
+    background-color: #f0f0f0;
+}
+
 /* Dark theme for tables */
 table, th, td {
     border-color: #444;
