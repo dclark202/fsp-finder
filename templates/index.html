@@ -50,7 +50,13 @@
     <div id="loading-overlay" class="hidden">
         <div class="loading-box">
             <h2 id="loading-text">Processing...</h2>
-            <p>This may take several minutes depending on song length and number of tracks being processed</p>
+            <p>
+                Please keep this page open
+                
+                <br>
+                
+                This may take several minutes based on song length and number of tracks being processed
+            </p>
         </div>
     </div>
 
@@ -72,21 +78,58 @@
             const loadingOverlay = document.getElementById('loading-overlay');
             const loadingText = document.getElementById('loading-text');
 
-            // --- THIS IS THE MISSING FILE DISPLAY LOGIC ---
-            function updateFileList() {
+            // --- Store files in an array to allow removal ---
+            let stagedFiles = [];
+
+            // --- Function to update the file list UI ---
+            const updateFileList = () => {
                 fileListDisplay.innerHTML = ''; // Clear the current list
-                if (fileInput.files.length === 0) {
+
+                if (stagedFiles.length === 0) {
                     fileListDisplay.innerHTML = '<p style="color: #585858">No files uploaded yet</p>';
                     return;
                 }
+
                 const list = document.createElement('ul');
-                for (const file of fileInput.files) {
+                stagedFiles.forEach((file, index) => {
                     const listItem = document.createElement('li');
-                    listItem.textContent = file.name;
+                    
+                    // File name text node
+                    const fileName = document.createTextNode(file.name);
+
+                    // Create remove button "x"
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = "button"; // prevent form submission
+                    removeBtn.className = "remove-file-btn";
+                    removeBtn.textContent = 'x';
+                    removeBtn.title = `Remove ${file.name}`;
+                    
+                    // Add click event to remove the file from the array and re-render the list
+                    removeBtn.onclick = () => removeFile(index);
+
+                    listItem.appendChild(fileName);
+                    listItem.appendChild(removeBtn);
                     list.appendChild(listItem);
-                }
+                });
                 fileListDisplay.appendChild(list);
-            }
+            };
+            
+            // --- Helper function to add new files to the staged list ---
+            const addFiles = (newFiles) => {
+                for (const file of newFiles) {
+                    // Optional: check for duplicates before adding
+                    if (!stagedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                        stagedFiles.push(file);
+                    }
+                }
+                updateFileList();
+            };
+
+            // --- Helper function to remove a file by index ---
+            const removeFile = (indexToRemove) => {
+                stagedFiles.splice(indexToRemove, 1);
+                updateFileList();
+            };
 
             // --- EVENT LISTENERS TO UPDATE THE FILE LIST ---
             uploadForm.addEventListener('dragover', (e) => { e.preventDefault(); uploadForm.classList.add('drag-over'); });
@@ -94,22 +137,26 @@
             uploadForm.addEventListener('drop', (e) => {
                 e.preventDefault();
                 uploadForm.classList.remove('drag-over');
-                fileInput.files = e.dataTransfer.files;
-                updateFileList(); // Update display on drop
+                addFiles(e.dataTransfer.files); // Use addFiles helper
             });
-            fileInput.addEventListener('change', updateFileList); // Update display on browse
+            fileInput.addEventListener('change', () => addFiles(fileInput.files)); // Use addFiles helper
 
             // --- LOGIC FOR SUBMITTING THE FORM AND POLLING FOR RESULTS ---
             uploadForm.addEventListener('submit', (event) => {
                 event.preventDefault();
-                if (fileInput.files.length === 0) {
+                if (stagedFiles.length === 0) {
                     alert("Please upload at least one audio file.");
                     return;
                 }
 
                 loadingText.textContent = 'Uploading...';
                 loadingOverlay.classList.remove('hidden');
-                const formData = new FormData(uploadForm);
+                
+                // Build FormData manually from the stagedFiles array
+                const formData = new FormData();
+                stagedFiles.forEach(file => {
+                    formData.append('files', file);
+                });
 
                 fetch('/analyze', {
                     method: 'POST',

@@ -83,6 +83,8 @@ async def analyze_files(files: List[UploadFile] = File(...)):
         task = analysis_task.delay(file_path)
         job_ids.append(task.id)
         
+        redis_client.setex(f"status_{task.id}", 3600, "queued")
+        
     return JSONResponse({"job_ids": job_ids})
 
 
