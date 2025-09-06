@@ -1,0 +1,258 @@
+{%- macro format_time(seconds) -%}
+  {% set minutes = seconds|int // 60 %}
+  {% set remaining_seconds = (seconds|round|int) % 60 %}
+  {% if remaining_seconds < 10 %}
+    {{- minutes -}}:0{{- remaining_seconds -}}
+  {% else %}
+    {{- minutes -}}:{{- remaining_seconds -}}
+  {% endif %}
+{%- endmacro %}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Review Transcripts</title>
+    <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" type="text/css">
+    <link rel="stylesheet" href="{{ request.url_for('static', path='style.css') }}">
+    <link rel="icon" href="{{ request.url_for('static', path='favicon.png') }}">
+</head>
+<body>
+    <h4>Review transcript(s) and apply edits</h4>    
+      <ul>
+        <li>Words to be censored will appear in <s>red strikethrough</s> text in the transcript below</li>
+        <li>If you've uploaded more than one song, use the list on the left to switch between transcripts</li>
+        <li>Click on a word in the transcript to toggle its censored status</li>
+        <li>Once you are satisfied with the edits, click <b>Apply edits and download this track</b> to download your track</li>
+      </ul>
+      
+      <p><b>Note</b> Currently only profanity and some select slurs will be automatically detected. 
+        Here's where you can help: <b>Please click to censor any additional explicit content (drug references, sexual themes, etc.) you find in the transcript.</b>
+        This additional information on what type of content should be censored will help us build a better model for detecting this content automatically. </p>
+
+      <p><b>Warning</b> Whisper's transcription can fail. If you find that a portion of the lyrics has not been transcribed correctly/at all, please consider running the tool again on that song.
+      
+      Always check your edited files against an official source to make sure all of the desired explicit content has been detected and censored.    
+      </p>
+
+    <hr>
+
+    <div class="review-container">
+        <div class="left-column">
+            <h5>Uploaded tracks</h5>
+            <ul id="file-list" class="clickable-list">
+                {% for result in results_list %}
+                    <li data-jobid="{{ result.job_id }}" class="file-item {% if loop.first %}active{% endif %}">
+                        {{ result.filename }}
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <a href="{{ request.url_for('index') }}" 
+              class="btn-secondary" 
+              onclick="return confirm('Are you sure you want to return home? All current analysis and edits will be lost.');">
+              Return to Home
+            </a>
+        </div>
+
+        <div class="right-column">
+            {% for result in results_list %}
+                <div id="transcript-{{ result.job_id }}" class="transcript-content" {% if not loop.first %}style="display: none;"{% endif %}>
+                    
+                    <p>
+                      <strong>Artist:</strong> {{ result.metadata.artist }} | 
+                      <strong>Song:</strong> {{ result.metadata.title }} | 
+                      <strong>Album:</strong> {{ result.metadata.album }} ({{ result.metadata.year }})
+
+                      {# This block adds the "View lyrics on Genius" link if the URL exists #}
+                      {% if result.metadata.genius_url %}
+                          <br>
+                          
+                          <a href="{{ result.metadata.genius_url }}" target="_blank"><b>View lyrics on Genius</b></a>
+                      {% endif %}
+
+                      {# This block adds the similarity score if both the score and URL exist #}
+                      {% if result.metadata.wer_score and result.metadata.genius_url %}
+                          | similarity score = {{ result.metadata.wer_score }} (lower is better)
+                      {% endif %}
+                    </p>
+          
+                    <form action="/finalize" method="post" class="download-form">
+                        <input type="hidden" name="job_id" value="{{ result.job_id }}">
+                        <input type="hidden" name="ids_to_censor" value="">
+                        <button type="submit">Apply edits and download this track</button>
+                    </form>
+
+                    <h5>Transcript</h5>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="'time-column">Time</th>
+                                <th>Line</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for segment in result.transcript %}
+                            <tr>
+                                <td>{{ format_time(segment.start) }} - {{ format_time(segment.end) }}</td>
+                                <td>
+                                    {% for word in segment.line_words %}
+                                        <span class="word-toggle" data-word-id="{{ word.id|tojson }}">
+                                            {{ word.text }}
+                                        </span>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <footer>
+        <hr>
+        <p>
+            &copy; 2025 FSP Finder | 
+            <a href="https://github.com/dclark202/auto-censoring">View project on GitHub</a> |
+            <a href="{{ request.url_for('contact') }}">Contact us</a>
+        </p>
+    </footer>
+
+    <div id="results-data" data-results='{{ results_list|tojson }}' style="display: none;"></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Part 1: Read Data Safely
+        const dataDiv = document.getElementById('results-data');
+        const resultsData = JSON.parse(dataDiv.dataset.results);
+        // console.log("--- Frontend Received Data ---", resultsData); // Print data to console for debugging
+
+        // Part 2: Setup Clickable Words and Initial State
+        const allWords = document.querySelectorAll('.word-toggle');
+        allWords.forEach(wordSpan => {
+            // Add the click listener to EVERY word first
+            wordSpan.addEventListener('click', () => {
+                wordSpan.classList.toggle('censored');
+            });
+
+            // Now, set the initial state
+            const wordId = JSON.parse(wordSpan.dataset.wordId);
+            const jobId = wordSpan.closest('.transcript-content').id.replace('transcript-', '');
+            
+            const resultData = resultsData.find(r => r.job_id === jobId);
+            if (!resultData || !resultData.initial_explicit_ids) return;
+
+            // Use .some() to check if the word's ID exists in the initial list
+            const isInitiallyCensored = resultData.initial_explicit_ids.some(
+                id => id[0] === wordId[0] && id[1] === wordId[1]
+            );
+
+            if (isInitiallyCensored) {
+                wordSpan.classList.add('censored');
+            }
+        });
+
+        const downloadForms = document.querySelectorAll('.download-form');
+        downloadForms.forEach(form => {
+            form.addEventListener('submit', event => {
+                const jobId = form.querySelector('input[name="job_id"]').value;
+                const hiddenInput = form.querySelector('input[name="ids_to_censor"]');
+                const finalIdsToCensor = [];
+                const currentTranscriptDiv = document.getElementById(`transcript-${jobId}`);
+                const censoredWordsInTranscript = currentTranscriptDiv.querySelectorAll('.word-toggle.censored');
+                
+                if (censoredWordsInTranscript.length === 0) {
+                    alert("No edits to make.");
+                    
+                    event.preventDefault(); 
+                    return; 
+                }
+                
+                censoredWordsInTranscript.forEach(wordSpan => {
+                    finalIdsToCensor.push(JSON.parse(wordSpan.dataset.wordId));
+                });
+                hiddenInput.value = JSON.stringify(finalIdsToCensor);
+            });
+        });
+
+        // Part 4: Tab Switching Logic (Unchanged)
+        const fileItems = document.querySelectorAll('.file-item');
+        const transcriptContents = document.querySelectorAll('.transcript-content');
+        fileItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const targetJobId = item.getAttribute('data-jobid');
+                fileItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                transcriptContents.forEach(content => { content.style.display = 'none'; });
+                const targetTranscript = document.getElementById(`transcript-${targetJobId}`);
+                if (targetTranscript) {
+                    targetTranscript.style.display = 'block';
+                }
+            });
+        });
+
+        const SESSION_DURATION_MIN = 30; // Must match backend (30 minutes)
+        const WARNING_TIME_MIN = 1;      // Show warning 1 minute before expiry
+
+        let sessionTimeoutHandle;
+        let warningTimeoutHandle;
+
+        const allJobIds = resultsData.map(r => r.job_id);
+
+        // Function to ping the server to keep the session alive
+        const keepSessionAlive = () => {
+            allJobIds.forEach(jobId => {
+                fetch(`/keep-alive/${jobId}`, { method: 'POST' })
+                    .then(response => {
+                        if (!response.ok) {
+                            // If the session has expired on the backend, stop everything
+                            showExpiryMessage();
+                        }
+                    })
+                    .catch(err => console.error('Keep-alive failed:', err));
+            });
+            console.log("Session extended.");
+        };
+
+        // Function to show the warning modal
+        const showWarning = () => {
+            if (confirm("Your session is about to expire in 1 minute due to inactivity. Click OK to extend it.")) {
+                keepSessionAlive(); // Extend the session
+                resetTimers();      // Restart the timers
+            }
+        };
+
+        // Function to show the final expiry message
+        const showExpiryMessage = () => {
+            clearInterval(keepAliveInterval);
+            clearTimeout(warningTimeoutHandle);
+            clearTimeout(sessionTimeoutHandle);
+            alert("Your session has expired. The page will now reload. Please upload your files again.");
+            window.location.href = "/"; // Redirect to homepage
+        };
+
+        // Function to reset all timers
+        const resetTimers = () => {
+            clearTimeout(warningTimeoutHandle);
+            clearTimeout(sessionTimeoutHandle);
+
+            warningTimeoutHandle = setTimeout(showWarning, (SESSION_DURATION_MIN - WARNING_TIME_MIN) * 60 * 1000);
+            sessionTimeoutHandle = setTimeout(showExpiryMessage, SESSION_DURATION_MIN * 60 * 1000);
+        };
+
+        // Ping the server every 5 minutes to keep the session alive
+        const keepAliveInterval = setInterval(keepSessionAlive, 5 * 60 * 1000);
+
+        // Start the initial timers
+        resetTimers();
+
+        // Reset timers on user activity
+        window.addEventListener('click', resetTimers);
+        window.addEventListener('keypress', resetTimers);
+        window.addEventListener('mousemove', resetTimers);
+    });
+    </script>
+</body>
+</html>
