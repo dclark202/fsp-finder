@@ -45,8 +45,8 @@ Follow these instructions to set up and run the application locally using Docker
 
 1.  **Clone the Repository:**
     ```bash
-    git clone <your-repository-url>
-    cd <repository-directory>
+    git clone github.com/dclark202/fsp-finder.git
+    cd fsp-finder
     ```
 
 2.  **Create Environment File:**
