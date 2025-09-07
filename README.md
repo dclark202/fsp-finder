@@ -26,10 +26,11 @@ Follow these instructions to set up and run the application locally using Docker
 2.  **Create Environment File:**
     Create a file named `.env` in the root directory. This file holds API keys required by the application (Note: the link on the Contact us page will not work if using this app locally).
     ```ini
-    # For fetching official lyrics from Genius.com
+    # (Optional) For fetching official lyrics from Genius.com
     GENIUS_API_TOKEN=YOUR_GENIUS_API_TOKEN
 
-    # For using the LLM to detect edge case explicit content
+    # (Optional) For using the LLM to detect edge case explicit content
+    # Requires access to Google Gemma 2
     HUGGING_FACE_HUB_TOKEN=YOUR_HF_TOKEN
     ```
 
