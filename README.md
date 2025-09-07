@@ -12,11 +12,8 @@ Follow these instructions to set up and run the application locally using Docker
 
 ### Prerequisites
 
-* **Git:** To clone the repository.
-* **NVIDIA GPU:** Required for efficient model inference.
-* **NVIDIA Drivers:** Ensure you have the latest drivers installed on your host machine.
-* **Docker Desktop:** To build and manage containers.
-* **NVIDIA Container Toolkit:** To allow Docker containers to access the host machine's GPU.
+* **CUDA capable GPU:** Required for efficient model inference (>12 GB VRAM recommended)
+* **Docker Desktop:** To build and manage containers (if using Windows, you will also need Windows Subsystem for Linux)
 
 ### Installation and Launch
 
@@ -27,13 +24,13 @@ Follow these instructions to set up and run the application locally using Docker
     ```
 
 2.  **Create Environment File:**
-    Create a file named `.env` in the root directory. This file holds API keys required by the application. Add the following keys (replace placeholders with real values):
+    Create a file named `.env` in the root directory. This file holds API keys required by the application (Note: the link on the Contact us page will not work if using this app locally).
     ```ini
-    # For sending email notifications via contact form
-    SENDGRID_API_KEY=YOUR_SENDGRID_API_KEY
-
     # For fetching official lyrics from Genius.com
     GENIUS_API_TOKEN=YOUR_GENIUS_API_TOKEN
+
+    # For using the LLM to detect edge case explicit content
+    HUGGING_FACE_HUB_TOKEN=YOUR_HF_TOKEN
     ```
 
 3.  **Build and Run with Docker Compose:**
