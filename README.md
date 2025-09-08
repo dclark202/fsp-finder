@@ -41,3 +41,19 @@ Follow these instructions to set up and run the application locally using Docker
     docker-compose up --build
     ```
     * Use `docker-compose up -d --build` to run in detached mode (background).
+
+---
+
+## Running this tool
+
+**To start the service**: 
+```bash
+docker-compose up -d
+```
+
+FSP Finder is then available for local use by navigating to `http://localhost/` in your web-browser of choice.
+
+**To stop the service**: 
+```bash
+docker-compose down
+```
