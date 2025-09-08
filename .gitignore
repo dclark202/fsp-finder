@@ -1,0 +1,4 @@
+# Ignore directories containing user-uploaded files and generated training data
+upload/
+train_data/
+.env

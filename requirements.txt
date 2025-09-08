@@ -2,13 +2,15 @@
 fastapi                     # High-performance web framework for building APIs
 uvicorn[standard]           # ASGI server to run the FastAPI application
 jinja2                      # Template engine for rendering HTML pages (index.html, results.html)
+python-multipart            # For understanding HTML
 
 # --- Background Task Queue ---
 celery                      # Asynchronous task queue for handling long-running analysis jobs
 redis                       # Message broker and result backend for Celery, also used for custom status tracking
 
 # --- Machine Learning & AI Core ---
-torch --index-url https://download.pytorch.org/whl/cu121                  
+# torch                     # Handled separately in the Dockerfile
+# torchvision
 transformers                
 peft                        
 
@@ -17,11 +19,12 @@ whisper-timestamped         # Whisper model fork that provides accurate word-lev
 demucs                      # Music source separation library (to isolate vocals)
 pydub                       # Library for audio manipulation (silencing segments, combining tracks)
 mutagen                     # Library for reading and writing audio metadata (MP3 tags like artist, title)
-librosa
+librosa                     # Required for audio processing with ffmpeg
 
 # --- Data Handling & Utilities ---
 jiwer                       # Used for calculating Word Error Rate (WER) and Match Error Rate (MER)
 lyricsgenius                # Python client for the Genius API to fetch song lyrics
+
 
 # --- Communication ---
 sendgrid                    # For sending emails via the contact form

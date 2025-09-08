@@ -16,10 +16,10 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # Celery configuration
 celery_app = Celery(
     'tasks',
-    broker='redis://localhost:6379/0',
-    backend='redis://localhost:6379/0' 
+    broker='redis://redis:6379/0',
+    backend='redis://redis:6379/0' 
 )
-redis_client = redis.Redis(host='localhost', port=6379, db=1, decode_responses=True)
+redis_client = redis.Redis(host='redis', port=6379, db=1, decode_responses=True)
 
 
 @celery_app.task(bind=True)

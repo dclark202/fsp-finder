@@ -1,6 +1,3 @@
-# Docker Compose configuration file version 3.8
-version: "3.8"
-
 services:
   # --- Redis Service ---
   # Acts as the message broker for Celery and stores task results.
@@ -14,13 +11,17 @@ services:
   # --- FastAPI Web Server Service ---
   # Handles HTTP requests from users, serves the frontend, and queues tasks.
   web:
-    build: . # Build from the Dockerfile in the current directory
+    build: 
+      context: .
+      dockerfile: .Dockerfile # Build from the Dockerfile in the current directory
     restart: unless-stopped
     command: uvicorn app:app --host 0.0.0.0 --port 8000
     ports:
       # Map port 80 on the host machine to port 8000 in the container.
       # Users will access the app via http://localhost:80
       - "80:8000"
+    env_file:
+      - .env
     volumes:
       # Mounts the current directory into the container for live code updates during development.
       # For production, you might remove this line to use the code baked into the image.
@@ -31,9 +32,13 @@ services:
   # --- Celery Worker Service ---
   # Executes the heavy ML/GPU tasks in the background.
   worker:
-    build: . # Reuse the same image built for the web service
+    build: 
+      context: .
+      dockerfile: .Dockerfile 
     restart: unless-stopped
     command: celery -A celery_worker.celery_app worker --loglevel=info -P solo
+    env_file:
+      - .env
     volumes:
       # Mount code for development consistency. Also ensure access to created/downloaded files.
       - .:/app
