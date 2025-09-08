@@ -26,7 +26,14 @@ Follow these instructions to set up and run the application locally using Docker
     cd fsp-finder
     ```
 
-2.  (Optional) **Create Environment File:**
+    **Note**: the files in `./lora-config/` are managed using Git LFS. Please make sure that Git LFS is installed prior to cloning the repo. If you've previously pulled the repo without Git LFS, run
+
+    ```bash
+    git lfs install
+    git lfs pull
+    ```
+
+3.  **(Optional) Create Environment File:**
     Create a file named `.env` in the root directory. This file holds API keys required by the application (Note: the link on the Contact us page will not work if using this app locally).
     ```ini
     # (Optional) For fetching official lyrics from Genius.com
@@ -37,7 +44,7 @@ Follow these instructions to set up and run the application locally using Docker
     HUGGING_FACE_HUB_TOKEN=YOUR_HF_TOKEN
     ```
 
-3.  **Build and Run with Docker Compose:**
+4.  **Build and Run with Docker Compose:**
     This command builds the Docker image (pre-caching ML models in the process) and starts all services (web server, worker, and Redis database).
 
     ```bash
