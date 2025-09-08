@@ -1,5 +1,8 @@
 # FSP Finder: AI-Powered Music Censoring Tool
 
+### Use this app on the web at [www.fspfinder.com](https://www.fspfinder.com)
+
+
 FSP Finder (Foul Speech Pattern Finder) is a web application designed to automatically detect and censor explicit language in audio files. It leverages machine learning models for high-accuracy transcription and source separation, providing content creators and small broadcasters with a tool to quickly prepare audio for airplay.
 
 Users can upload music tracks, review an AI-generated transcript with highlighted sections, and approve edits to generate a high-quality censored version where explicit vocals are muted while background instrumentals remain untouched.
