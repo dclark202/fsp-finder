@@ -26,7 +26,7 @@ Follow these instructions to set up and run the application locally using Docker
     cd fsp-finder
     ```
 
-2.  **Create Environment File:**
+2.  (Optional) **Create Environment File:**
     Create a file named `.env` in the root directory. This file holds API keys required by the application (Note: the link on the Contact us page will not work if using this app locally).
     ```ini
     # (Optional) For fetching official lyrics from Genius.com
