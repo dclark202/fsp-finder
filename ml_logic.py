@@ -10,6 +10,7 @@ import lyricsgenius
 import jiwer
 
 # IMPORTS FOR USING LLM
+
 # import transformers
 # from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, pipeline
 # import numpy as np
@@ -21,6 +22,7 @@ import jiwer
 # from langchain_core.runnables import RunnableLambda
 # from langchain.output_parsers import OutputFixingParser
 
+SHARED_ARTIFACTS_PATH = "/job_artifacts"
 
 # For censoring 
 default_curse_words = {
@@ -37,7 +39,7 @@ singular_curse_words = {
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 LLM_MODEL_ID = "google/gemma-2-9b-it"
 WHISPER_BASE_MODEL = "openai/whisper-medium.en"
-WHISPER_FT_MODEL_PATH = 'whisper-medium-ft'
+WHISPER_FT_MODEL_PATH = '/model-cache/whisper-medium-ft'
 LORA_CONFIG_PATH = './lora_config'
 
 
@@ -138,7 +140,11 @@ def get_genius_lyrics(artist, song_title):
 
 # Separate track via demucs, evaluate vocals with Whisper
 def analyze_audio(audio_path, model, device):
-    run_temp_dir = tempfile.mkdtemp()
+    
+    run_id = str(uuid.uuid4())
+    run_temp_dir = os.path.join(SHARED_ARTIFACTS_PATH, run_id)
+    os.makedirs(run_temp_dir, exist_ok=True)
+    
     source_path = os.path.abspath(audio_path)
     temp_audio_path = os.path.join(run_temp_dir, 'temp_audio.mp3')
     shutil.copy(source_path, temp_audio_path)

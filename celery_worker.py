@@ -1,13 +1,20 @@
 # celery_worker.py
 import os
 import shutil
+import time
 from celery import Celery
 from ml_logic import analyze_audio, process_transcription, calculate_wer
 import torch
 import whisper_timestamped as whisper
 import redis
+from celery.schedules import crontab
+
+from ml_logic import WHISPER_FT_MODEL_PATH
 
 WHISPER_MODEL = None
+SHARED_ARTIFACTS_PATH = "/job_artifacts"
+EXPIRATION_HOURS = 2 # Files older than 2 hours will be deleted
+EXPIRATION_SECONDS = EXPIRATION_HOURS * 3600
 
 # Define a shared upload folder
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
@@ -19,8 +26,16 @@ celery_app = Celery(
     broker='redis://redis:6379/0',
     backend='redis://redis:6379/0' 
 )
-redis_client = redis.Redis(host='redis', port=6379, db=1, decode_responses=True)
 
+celery_app.conf.beat_schedule = {
+    'cleanup-stale-files-hourly': {
+        'task': 'celery_worker.cleanup_stale_files',
+        'schedule': crontab(minute=0, hour='*/1'), # Run at minute 0 of every hour
+    },
+}
+
+# Same Redis client and the app.pu
+redis_client = redis.Redis(host='redis', port=6379, db=1, decode_responses=True)
 
 @celery_app.task(bind=True)
 def analysis_task(self, file_path: str):
@@ -37,7 +52,7 @@ def analysis_task(self, file_path: str):
 
     if WHISPER_MODEL is None:
         print("CELERY WORKER: Loading Whisper model for the first time in this process...")
-        WHISPER_MODEL = whisper.load_model('whisper-medium-ft', device=DEVICE)
+        WHISPER_MODEL = whisper.load_model(WHISPER_FT_MODEL_PATH, device=DEVICE)
         print("CELERY WORKER: Whisper model loaded successfully.")
 
     analysis_state = {}
@@ -53,3 +68,38 @@ def analysis_task(self, file_path: str):
     
     print(f"CELERY TASK: Analysis complete for {file_path}")
     return analysis_state 
+
+@celery_app.task
+def cleanup_stale_files():
+    """Scans artifact and upload directories and removes files older than EXPIRATION_HOURS."""
+    print(f"--- Running scheduled cleanup: Deleting files older than {EXPIRATION_HOURS} hours ---")
+    now = time.time()
+
+    # 1. Clean up job artifact directories (/job_artifacts)
+    if os.path.exists(SHARED_ARTIFACTS_PATH):
+        for dirname in os.listdir(SHARED_ARTIFACTS_PATH):
+            dirpath = os.path.join(SHARED_ARTIFACTS_PATH, dirname)
+            if os.path.isdir(dirpath):
+                try:
+                    # Get last modification time of the directory itself
+                    modified_time = os.path.getmtime(dirpath)
+                    if (now - modified_time) > EXPIRATION_SECONDS:
+                        print(f"Cleaning up stale artifact directory: {dirpath}")
+                        shutil.rmtree(dirpath)
+                except FileNotFoundError:
+                    continue # File might have been deleted by a parallel process
+
+    # 2. Clean up original uploads (/app/uploads)
+    if os.path.exists(UPLOAD_FOLDER):
+        for filename in os.listdir(UPLOAD_FOLDER):
+            filepath = os.path.join(UPLOAD_FOLDER, filename)
+            if os.path.isfile(filepath):
+                try:
+                    modified_time = os.path.getmtime(filepath)
+                    if (now - modified_time) > EXPIRATION_SECONDS:
+                        print(f"Cleaning up stale upload file: {filepath}")
+                        os.remove(filepath)
+                except FileNotFoundError:
+                    continue
+    
+    return f"Cleanup complete. Removed items older than {EXPIRATION_HOURS} hours."

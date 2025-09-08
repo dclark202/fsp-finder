@@ -1,55 +1,75 @@
 services:
   # --- Redis Service ---
-  # Acts as the message broker for Celery and stores task results.
   redis:
-    image: "redis:alpine" # Use a lightweight official Redis image
+    image: "redis:alpine"
     restart: unless-stopped
     ports:
-      # Expose Redis on the host machine for potential debugging (optional)
       - "6379:6379"
 
   # --- FastAPI Web Server Service ---
-  # Handles HTTP requests from users, serves the frontend, and queues tasks.
   web:
-    build: 
+    build:
       context: .
-      dockerfile: .Dockerfile # Build from the Dockerfile in the current directory
+      dockerfile: .Dockerfile
     restart: unless-stopped
     command: uvicorn app:app --host 0.0.0.0 --port 8000
     ports:
-      # Map port 80 on the host machine to port 8000 in the container.
-      # Users will access the app via http://localhost:80
       - "80:8000"
     env_file:
       - .env
     volumes:
-      # Mounts the current directory into the container for live code updates during development.
-      # For production, you might remove this line to use the code baked into the image.
+      # Mounts code for live updates
       - .:/app
+      # Mounts a named volume for uploads to persist data and handle permissions
+      - app_data:/app/uploads
+      - training_data:/app/training_data # Add this for your training data as well
+      - job_artifacts:/job_artifacts
     depends_on:
-      - redis # Ensures Redis starts before the web server attempts to connect.
+      - redis
 
   # --- Celery Worker Service ---
-  # Executes the heavy ML/GPU tasks in the background.
   worker:
-    build: 
+    build:
       context: .
-      dockerfile: .Dockerfile 
+      dockerfile: .Dockerfile
     restart: unless-stopped
     command: celery -A celery_worker.celery_app worker --loglevel=info -P solo
     env_file:
       - .env
     volumes:
-      # Mount code for development consistency. Also ensure access to created/downloaded files.
+      # Mounts code for live updates
       - .:/app
+      # Share the same named volumes with the web service
+      - app_data:/app/uploads
+      - training_data:/app/training_data # Add this for your training data as well
+      - job_artifacts:/job_artifacts
     depends_on:
-      - redis # Ensures Redis starts before the worker attempts to connect.
+      - redis
     deploy:
       resources:
         reservations:
           devices:
-            # Grants the container access to the host machine's GPU resources.
-            # Requires NVIDIA Container Toolkit to be installed on the host.
             - driver: nvidia
-              count: all # or "1" to limit to a single GPU
+              count: all
               capabilities: [gpu]
+  beat:
+    build:
+      context: .
+      dockerfile: .Dockerfile
+    restart: unless-stopped
+    command: celery -A celery_worker.celery_app beat --loglevel=info
+    env_file:
+      - .env
+    volumes:
+      # Mount volumes needed for file system access during cleanup checks
+      - .:/app
+      - app_data:/app/uploads
+      - job_artifacts:/job_artifacts
+    depends_on: 
+      - redis
+
+# --- Define the named volumes at the bottom ---
+volumes:
+  app_data:
+  training_data:
+  job_artifacts:

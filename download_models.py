@@ -4,11 +4,7 @@ import demucs.pretrained
 from transformers import WhisperForConditionalGeneration
 from peft import PeftModel
 
-# --- Constants from ml_logic.py ---
-# Ensure these paths match your project structure.
-WHISPER_BASE_MODEL = "openai/whisper-medium.en"
-WHISPER_FT_MODEL_PATH = 'whisper-medium-ft'
-LORA_CONFIG_PATH = './lora_config'
+from ml_logic import WHISPER_BASE_MODEL, WHISPER_FT_MODEL_PATH, LORA_CONFIG_PATH
 
 def cache_whisper_model():
     """
@@ -45,8 +41,7 @@ def cache_whisper_model():
         print(f"ERROR: Could not create fine-tuned Whisper model.")
         print(f"Make sure '{LORA_CONFIG_PATH}' exists and contains valid LoRA weights.")
         print(f"Details: {e}")
-        # Depending on requirements, you might want to raise the exception to stop the build.
-        # raise e
+
 
 def cache_demucs_model():
     """

@@ -173,20 +173,20 @@ async def finalize_file(job_id: str = Form(...), ids_to_censor: str = Form(...))
     
     tasks = BackgroundTasks()
 
-    def cleanup_files():
-        if temp_dir and os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
-            print(f"Cleaned up temp directory for job {job_id}: {temp_dir}")
-        if os.path.exists(initial_upload_path):
-            os.remove(initial_upload_path)
-            print(f"Cleaned up uploaded file: {initial_upload_path}")
+    # def cleanup_files():
+    #     if temp_dir and os.path.exists(temp_dir):
+    #         shutil.rmtree(temp_dir)
+    #         print(f"Cleaned up temp directory for job {job_id}: {temp_dir}")
+    #     if os.path.exists(initial_upload_path):
+    #         os.remove(initial_upload_path)
+    #         print(f"Cleaned up uploaded file: {initial_upload_path}")
 
-    tasks.add_task(cleanup_files)
+    # tasks.add_task(cleanup_files)
 
     # Return the file, passing the cleanup task to be run AFTER the response is sent
     return FileResponse(
         path=output_path, 
         media_type='audio/mpeg', 
         filename=os.path.basename(output_path),
-        background=tasks  
+        # background=tasks  
     )
