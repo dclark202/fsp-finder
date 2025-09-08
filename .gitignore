@@ -1,4 +1,5 @@
 # Ignore directories containing user-uploaded files and generated training data
-upload/
+uploads/
 train_data/
 .env
+celerybeat-schedule.db
