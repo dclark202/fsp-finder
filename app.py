@@ -28,7 +28,6 @@ templates = Jinja2Templates(directory="templates")
 
 redis_client = redis.Redis(host='redis', port=6379, db=1, decode_responses=True)
 
-
 class FinalizeRequest(BaseModel):
     job_id: str
     ids_to_censor: List[List[int]] = None 
@@ -70,7 +69,12 @@ async def handle_contact_form(name: str = Form(...), email: str = Form(...), mes
 # --- Core Application API Endpoints ---
 
 @app.post("/analyze")
-async def analyze_files(files: List[UploadFile] = File(...)):
+async def analyze_files(
+    files: List[UploadFile] = File(...),
+    profanity_list: str = Form(""),
+    use_vad: bool = Form(False),
+    llm_detection: bool = Form(False)
+):
     # Import the task function here to avoid circular import issues at startup
     from celery_worker import analysis_task
     
@@ -80,7 +84,13 @@ async def analyze_files(files: List[UploadFile] = File(...)):
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        task = analysis_task.delay(file_path)
+        task = analysis_task.delay(
+            file_path, 
+            profanity_list=profanity_list, 
+            use_vad=use_vad, 
+            llm_detection=llm_detection
+        )
+
         job_ids.append(task.id)
         
         redis_client.setex(f"status_{task.id}", 3600, "queued")

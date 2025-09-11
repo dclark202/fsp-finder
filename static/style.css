@@ -214,3 +214,84 @@ footer p {
     border-color: #8ab4f8; /* A light blue to indicate a valid drop zone */
     background-color: #2a2a2a;
 }
+
+/* --- Collapsible Advanced Options --- */
+.collapsible {
+    margin: 1.5rem 0;
+}
+
+.collapsible-toggle {
+    background-color: #1e1e1e; /* Matches upload form background */
+    color: #e0e0e0;            /* Soft white text color */
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    border: 1px solid #444;    /* Subtle border color */
+    text-align: left;
+    outline: none;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.collapsible-toggle:hover {
+    background-color: #333; /* Slightly lighter on hover */
+}
+
+.collapsible-toggle.active {
+    background-color: #004d40; /* Teal accent color when active */
+    color: #ffffff;
+    border-color: #00695c;
+}
+
+.collapsible-toggle:after {
+    content: '';
+    float: right;
+    margin-left: 5px; /* Increased margin */
+    width: 1em;     /* Increased size */
+    height: 1em;    /* Increased size */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23888'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: transform 0.2s;
+}
+
+.collapsible-toggle.active:after {
+    transform: rotate(180deg); /* Point up */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+}
+
+.collapsible-content {
+    padding: 0 18px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+    background-color: transparent; /* Makes content area blend in */
+    border: 1px solid #444;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+}
+
+.collapsible-content p {
+    margin-top: 1rem;
+    color: #aaa; /* Lighter text for description */
+}
+
+.collapsible-content textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #121212;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 0.5rem;
+}
+
+.collapsible-content label {
+    display: block;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}

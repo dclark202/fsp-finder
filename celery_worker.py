@@ -3,7 +3,7 @@ import os
 import shutil
 import time
 from celery import Celery
-from ml_logic import analyze_audio, process_transcription, calculate_wer
+from ml_logic import analyze_audio, process_transcription, calculate_wer, create_llm_chain
 import torch
 import whisper_timestamped as whisper
 import redis
@@ -12,6 +12,8 @@ from celery.schedules import crontab
 from ml_logic import WHISPER_FT_MODEL_PATH
 
 WHISPER_MODEL = None
+LLM_CHAIN = None
+
 SHARED_ARTIFACTS_PATH = "/job_artifacts"
 EXPIRATION_HOURS = 2 # Files older than 2 hours will be deleted
 EXPIRATION_SECONDS = EXPIRATION_HOURS * 3600
@@ -38,7 +40,7 @@ celery_app.conf.beat_schedule = {
 redis_client = redis.Redis(host='redis', port=6379, db=1, decode_responses=True)
 
 @celery_app.task(bind=True)
-def analysis_task(self, file_path: str):
+def analysis_task(self, file_path: str, profanity_list: str, use_vad: bool, llm_detection: bool):
     """
     Runs the full analysis and returns the results dictionary.
     This runs in a separate Celery worker process.
@@ -46,7 +48,7 @@ def analysis_task(self, file_path: str):
     job_id = self.request.id
     redis_client.setex(f"status_{job_id}", 3600, "processing")
 
-    global WHISPER_MODEL 
+    global WHISPER_MODEL, LLM_CHAIN
     analysis_state = {}
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -55,10 +57,24 @@ def analysis_task(self, file_path: str):
         WHISPER_MODEL = whisper.load_model(WHISPER_FT_MODEL_PATH, device=DEVICE)
         print("CELERY WORKER: Whisper model loaded successfully.")
 
+    llm_chain_to_pass = None
+    if llm_detection:
+        if LLM_CHAIN is None:
+            print("CELERY WORKER: LLM detection enabled. Loading LLM for the first time in this process...")
+            LLM_CHAIN = create_llm_chain()
+            print("CELERY WORKER: LLM loaded successfully.")
+        llm_chain_to_pass = LLM_CHAIN
+
     analysis_state = {}
 
-    analysis_state = analyze_audio(file_path, WHISPER_MODEL, DEVICE)
-    processed_data = process_transcription(analysis_state['transcription_result'], llm_chain=None)
+    analysis_state = analyze_audio(file_path, WHISPER_MODEL, DEVICE, use_vad=use_vad)
+    
+    processed_data = process_transcription(
+        analysis_state['transcription_result'], 
+        llm_chain=llm_chain_to_pass,
+        profanity_list=profanity_list
+    )
+
     analysis_state.update(processed_data)
 
     transcript_text = " ".join([word['text'] for seg in analysis_state['transcript'] for word in seg['line_words']])

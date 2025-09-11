@@ -11,8 +11,11 @@ services:
     build:
       context: .
       dockerfile: .Dockerfile
+      # ADD THIS SECTION to pass the token during the build
+      args:
+        - HF_TOKEN=${HF_TOKEN}
     restart: unless-stopped
-    command: uvicorn app:app --host 0.0.0.0 --port 8000
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "80:8000"
     env_file:
@@ -22,7 +25,7 @@ services:
       - .:/app
       # Mounts a named volume for uploads to persist data and handle permissions
       - app_data:/app/uploads
-      - training_data:/app/training_data # Add this for your training data as well
+      - training_data:/app/training_data
       - job_artifacts:/job_artifacts
     depends_on:
       - redis
@@ -32,8 +35,11 @@ services:
     build:
       context: .
       dockerfile: .Dockerfile
+      # ADD THIS SECTION to pass the token during the build
+      args:
+        - HF_TOKEN=${HF_TOKEN}
     restart: unless-stopped
-    command: celery -A celery_worker.celery_app worker --loglevel=info -P solo
+    command: watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- celery -A celery_worker.celery_app worker --loglevel=info -P solo
     env_file:
       - .env
     volumes:
@@ -41,7 +47,7 @@ services:
       - .:/app
       # Share the same named volumes with the web service
       - app_data:/app/uploads
-      - training_data:/app/training_data # Add this for your training data as well
+      - training_data:/app/training_data
       - job_artifacts:/job_artifacts
     depends_on:
       - redis
@@ -56,6 +62,9 @@ services:
     build:
       context: .
       dockerfile: .Dockerfile
+      # ADD THIS SECTION to pass the token during the build
+      args:
+        - HF_TOKEN=${HF_TOKEN}
     restart: unless-stopped
     command: celery -A celery_worker.celery_app beat --loglevel=info
     env_file:
@@ -65,7 +74,7 @@ services:
       - .:/app
       - app_data:/app/uploads
       - job_artifacts:/job_artifacts
-    depends_on: 
+    depends_on:
       - redis
 
 # --- Define the named volumes at the bottom ---

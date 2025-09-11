@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FSP Finder - Upload</title>
+    <title>FSP Finder [[Local]]</title>
     <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" type="text/css">
     <link rel="stylesheet" href="{{ request.url_for('static', path='style.css') }}">
     <link rel="icon" href="{{ request.url_for('static', path='favicon.png') }}">
@@ -36,12 +36,29 @@
           <p style="color: #585858">No files uploaded yet</p>
       </div>
 
+      <div class="collapsible">
+          <button type="button" class="collapsible-toggle">Advanced options (click to open)</button>
+          <div class="collapsible-content">
+              <label for="profanity-list">Additional words to censor</label>
+              <textarea id="profanity-list" name="profanity_list" rows="3" placeholder="ex.: dang, heck, shucks, ... (not case sensitive)"></textarea>
+              
+              <label for="use-vad">Use Voice Activity Detection (VAD)</label>
+              <input type="checkbox" id="use-vad" name="use_vad" value="true" >
+              <small>Helps remove silence and non-speech sections from the lyrics transcript</small>
+              
+              <label for="llm-detection">Enable LLM Content Analysis</label>
+              <input type="checkbox" id="llm-detection" name="llm_detection" value="true">
+              <small>(Still in development) Uses a large language model to flag additional case dependent explicit content. Selecting this will incrase processing times</small>
+          </div>
+      </div>
+
       <br>
       <button type="submit" class="process-button">Process audio</button>
     </form>
     
-      <h4>How it works</h4> 
-      <p>This app uses a fine-tuned version of OpenAI's automatic speech recognition model <a href=https://github.com/openai/whisper>Whisper</a> to create lyrics transcripts of the uploaded music files. 
+
+    <h4>How it works</h4> 
+    <p>This app uses a fine-tuned version of OpenAI's automatic speech recognition model <a href=https://github.com/openai/whisper>Whisper</a> to create lyrics transcripts of the uploaded music files. 
         Always explicit content (e.g., profanity, slurs) is immediately flagged and highlighted in <s>red strikethrough</s> text in the full transcript. 
         The vocals stem of the track is split off from the song using <a href="https://github.com/facebookresearch/demucs">demucs</a> and muted at the corresponding times, creating a high quality edited track, ready for air play.</p>
 
@@ -64,7 +81,7 @@
         <hr>
         <p>
             &copy; 2025 FSP Finder | 
-            <a href="https://github.com/dclark202/auto-censoring">View project on GitHub</a> |
+            <a href="https://github.com/dclark202/fsp-finder">View project on GitHub</a> |
             <a href="{{ request.url_for('contact') }}">Contact us</a>
         </p>
     </footer>
@@ -152,11 +169,20 @@
                 loadingText.textContent = 'Uploading...';
                 loadingOverlay.classList.remove('hidden');
                 
-                // Build FormData manually from the stagedFiles array
+                // Build FormData manually and include advanced options
                 const formData = new FormData();
                 stagedFiles.forEach(file => {
                     formData.append('files', file);
                 });
+
+                // Get advanced options and append them to the form data
+                const profanityList = document.getElementById('profanity-list').value;
+                const useVad = document.getElementById('use-vad').checked;
+                const llmDetection = document.getElementById('llm-detection').checked;
+
+                formData.append('profanity_list', profanityList);
+                formData.append('use_vad', useVad);
+                formData.append('llm_detection', llmDetection);
 
                 fetch('/analyze', {
                     method: 'POST',
@@ -228,6 +254,17 @@
                         alert("One or more processing jobs failed. Please check the console and try again.");
                     });
             };
+            
+            // --- ADVANCED OPTIONS COLLAPSIBLE SCRIPT ---
+            document.querySelector('.collapsible-toggle').addEventListener('click', function() {
+                this.classList.toggle('active');
+                const content = this.nextElementSibling;
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }
+            });
         });
     </script>
 </body>
