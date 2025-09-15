@@ -26,48 +26,76 @@
             <h4>Key components</h4>
 
             <div class="methodology-card">
-                <h6>1. Audio Source Separation with Demucs</h6>
+                <h6>1. Audio source separation with demucs</h6>
                 <p>
                     Before any transcription or analysis, the input audio file undergoes a crucial step: source separation. We use <a href="https://github.com/facebookresearch/demucs" target="_blank">Demucs</a>, a state-of-the-art deep learning model for music source separation. Specifically, the <code>mdx_extra</code> model is employed to effectively separate the vocal track from the instrumental track. This isolation of vocals is critical for accurate speech-to-text transcription and subsequent explicit content detection, as it minimizes interference from background music.
                 </p>
             </div>
 
             <div class="methodology-card">
-                <h6>2. Speech-to-Text Transcription with Whisper</h6>
+                <h6>2. Speech-to-Text transcription with whisper</h6>
                 <p>
                     Once the vocal track is isolated, it is fed into an adapted version of OpenAI's <a href="https://openai.com/research/whisper" target="_blank">Whisper</a> model for highly accurate speech-to-text transcription. 
                     Our system utilizes a fine-tuned Whisper model (<code>whisper-medium.en</code>) further enhanced with LoRA (Low-Rank Adaptation) weights. 
                     Specifically, this model was fine tuned using timestamped vocals data from the <a href=https://zenodo.org/records/2577915>DALI dataset</a>. 
                     More information on the fine tuning can be found on the <a href=https://github.com/dclark202/auto-censoring>auto-censoring GitHub page</a>. 
-                    This fine-tuning allows for improved performance on specific audio characteristics, ensuring a more precise transcription of sung vocals, which is fundamental for reliable content moderation of music.
+                    
+                    <br><Br>
+
+                    We additionally include a second-pass approach for ensuring that all vocals are transcribed. Any untranscribed gap in the vocals transcript is rerun through Whisper with more generous computation metrics if it is detected to have any audio (average dB rating greater than -30). 
+                    Any remaining gaps after the second pass are flagged with a warning.
                 </p>
             </div>
 
             <div class="methodology-card">
-                <h6>3. Voice Activity Detection (VAD) with Silero VAD</h6>
+                <h6>3. Voice activity detection (VAD) with Silero VAD</h6>
                 <p>
                     To optimize transcription and ensure that only relevant speech segments are processed, we integrate <a href="https://github.com/snakers4/silero-vad" target="_blank">Silero VAD (Voice Activity Detection)</a>. This model accurately identifies periods of speech within the audio, allowing the Whisper model to focus its processing power only when actual speech is present. This not only speeds up the transcription process but also helps in accurately identifying and re-transcribing untranscribed gaps that might contain speech.
                 </p>
             </div>
 
             <div class="methodology-card">
-                <h6>4. (Experimental) Explicit Content Detection with Gemma LLM</h6>
+                <h6>4. (Experimental) Explicit content detection with Gemma LLM</h6>
                 <p>
                     For the core task of identifying explicit or profane content, the transcribed text is analyzed by <a href="https://blog.google/technology/developers/gemma-open-models/" target="_blank">Gemma</a>, Google's lightweight, state-of-the-art open large language model. We utilize a quantized version of the Gemma 9B instruction-tuned model. 
                     The LLM is prompted with specific instructions to act as an AI content moderator, identifying phrases that would be considered "indecent" or "profane" under broadcast standards, while also considering context to avoid false positives. 
-                    This advanced contextual understanding is crucial for nuanced content moderation. Use of this tool contributes to gathering training data to fine tune this model for more sensitive explicit content detetion.
+                    This advanced contextual understanding is crucial for nuanced content moderation. 
+            
+                    <br><br>
+
+                    Use of this tool contributes to gathering training data to fine tune this model for more sensitive explicit content detetion.
                 </p>
             </div>
 
             <div class="methodology-card">
-                <h6>5. Backup Censoring Logic</h6>
+                <h6>5. Backup explicit content detection</h6>
                 <p>
-                    In addition to the LLM-based detection, a robust backup censoring mechanism is in place. This logic specifically targets commonly known curse words and multi-word explicit phrases. This dual-layer approach—combining the nuanced understanding of a large language model with explicit keyword matching—ensures comprehensive coverage and reduces the chances of explicit content slipping through.
+                    Either in addition to or in lieu of the LLM-based detection, a robust backup censoring mechanism is in place. 
+                    This logic specifically targets commonly known curse words and multi-word explicit phrases (see below). Users can add additional words to be automatically detected using advanced settings.
+                    This dual-layer approach—combining the nuanced understanding of a large language model with explicit keyword matching—ensures comprehensive coverage and reduces the chances of explicit content slipping through.
+
+                    <details>
+                        <summary>Click to see a list of automatically flagged words <span style="color: #ffcc00">(CONTENT WARNING: profanity, racial slurs)</span></summary>
+                        <br>
+                        <p>
+                            <b>Any word that contains the following as a <em>substring</em>:</b> <br>
+                            
+                            fuck, shit, piss, bitch, nigg, dyke, cock, faggot, cunt, tits, pussy, dick, asshole, whore, goddam, douche, chink, tranny, jizz, kike, gook, cocksucker
+                            
+                            <br><br>
+
+                            <b>Or any of the following words exactly as they appear:</b>
+                            
+                            <br>
+                            
+                            fag, cum, clit, wank, ho, hoes, hos
+                        </p>
+                    </details>
                 </p>
             </div>
 
             <div class="methodology-card">
-                <h6>6. Audio Censoring and Reconstruction</h6>
+                <h6>6. Audio censoring and reconstruction</h6>
                 <p>
                     Once explicit segments are identified, either by the model or the user, the system precisely silences those specific portions within the isolated vocal track. After censoring, the modified vocal track is then seamlessly recombined with the original instrumental track. The final output is an edited audio file where explicit content is removed, while preserving the integrity and quality of the original song. Metadata from the original audio is also transferred to the censored version.
                 </p>

@@ -360,3 +360,22 @@ code {
   border-radius: 3px;
   font-size: 85%;
 }
+
+details {
+  border: 1px solid #004d40;
+  border-radius: 4px;
+  padding: 0.5rem;
+  margin: 1rem 0;
+}
+
+summary {
+  font-weight: bold;
+  cursor: pointer; /* Changes the mouse to a pointer on hover */
+  outline: none; /* Removes the focus outline on some browsers */
+}
+
+/* Optional: Style for the list inside */
+details ul {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
