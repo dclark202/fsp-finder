@@ -4,7 +4,7 @@ import shutil
 from typing import List, Optional
 
 # API
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request, Query, Form, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request, Query, Form, Path
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -27,6 +27,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 redis_client = redis.Redis(host='redis', port=6379, db=1, decode_responses=True)
+REDIS_EXPIRATION_SECONDS = 900
 
 class FinalizeRequest(BaseModel):
     job_id: str
@@ -43,6 +44,10 @@ async def contact(request: Request):
 @app.get("/terms")
 async def terms(request: Request):
     return templates.TemplateResponse("terms.html", {"request": request})
+
+@app.get("/methodology")
+async def methodology(request: Request):
+    return templates.TemplateResponse("methodology.html", {"request": request})
 
 # --- Contact Form Logic ---
 
@@ -69,12 +74,7 @@ async def handle_contact_form(name: str = Form(...), email: str = Form(...), mes
 # --- Core Application API Endpoints ---
 
 @app.post("/analyze")
-async def analyze_files(
-    files: List[UploadFile] = File(...),
-    profanity_list: str = Form(""),
-    use_vad: bool = Form(False),
-    llm_detection: bool = Form(False)
-):
+async def analyze_files(files: List[UploadFile] = File(...), profanity_list: str = Form(""), use_vad: bool = Form(False), llm_detection: bool = Form(False)):
     # Import the task function here to avoid circular import issues at startup
     from celery_worker import analysis_task
     
@@ -116,6 +116,7 @@ async def get_status(job_id: str):
         # If the task isn't ready and not marked as 'processing', it must be in the queue.
         return {"status": "queued"}
 
+
 @app.get("/results")
 async def get_results_page(request: Request, job_ids: str = Query(...)):
     job_id_list = job_ids.split(',')
@@ -139,6 +140,22 @@ async def get_results_page(request: Request, job_ids: str = Query(...)):
 
     return templates.TemplateResponse("results.html", {"request": request, "results_list": results_list})
 
+
+@app.post("/keep-alive/{job_id}")
+async def keep_alive(job_id: str = Path(...)):
+    """
+    Extends the expiration time for a job's data in Redis.
+    """
+    # Check for the main job data key and the status key
+    if redis_client.exists(job_id):
+        redis_client.expire(job_id, REDIS_EXPIRATION_SECONDS)
+
+    if redis_client.exists(f"status_{job_id}"):
+        redis_client.expire(f"status_{job_id}", REDIS_EXPIRATION_SECONDS)
+
+    return JSONResponse({"status": "ok", "message": f"Session for job {job_id} extended."})
+
+
 @app.post("/finalize")
 async def finalize_file(job_id: str = Form(...), ids_to_censor: str = Form(...)):
     cached_result_json = redis_client.get(job_id)
@@ -149,8 +166,8 @@ async def finalize_file(job_id: str = Form(...), ids_to_censor: str = Form(...))
     analysis_state = json.loads(cached_result_json)
     
     # Get the paths for cleanup before the main logic
-    temp_dir = analysis_state.get('temp_dir')
-    initial_upload_path = os.path.join(UPLOAD_FOLDER, analysis_state.get('original_filename', ''))
+    # temp_dir = analysis_state.get('temp_dir')
+    # initial_upload_path = os.path.join(UPLOAD_FOLDER, analysis_state.get('original_filename', ''))
     
     # The list of IDs comes from the form as a JSON string, so we parse it
     final_ids_to_censor = json.loads(ids_to_censor)
@@ -181,17 +198,7 @@ async def finalize_file(job_id: str = Form(...), ids_to_censor: str = Form(...))
     if not output_path:
         raise HTTPException(status_code=400, detail="No content was marked for censoring.")
     
-    tasks = BackgroundTasks()
-
-    # def cleanup_files():
-    #     if temp_dir and os.path.exists(temp_dir):
-    #         shutil.rmtree(temp_dir)
-    #         print(f"Cleaned up temp directory for job {job_id}: {temp_dir}")
-    #     if os.path.exists(initial_upload_path):
-    #         os.remove(initial_upload_path)
-    #         print(f"Cleaned up uploaded file: {initial_upload_path}")
-
-    # tasks.add_task(cleanup_files)
+    # tasks = BackgroundTasks()
 
     # Return the file, passing the cleanup task to be run AFTER the response is sent
     return FileResponse(

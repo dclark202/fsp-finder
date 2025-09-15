@@ -12,6 +12,7 @@ redis
 # torch, torchvision handled separately in the Dockerfile
 transformers
 peft
+huggingface-hub
 
 # --- Audio Processing & Transcription ---
 whisper-timestamped

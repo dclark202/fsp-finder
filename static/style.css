@@ -182,7 +182,7 @@ footer p {
     border-radius: 5px;
     font-weight: bold;
     background-color: transparent;
-    border: 2px solid #004d40; /* Use your theme's accent color for the border */
+    border: 2px solid #004d40;
     color: #004d40;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
@@ -294,4 +294,69 @@ footer p {
     margin-top: 1rem;
     margin-bottom: 0.5rem;
     font-weight: bold;
+}
+
+.untranscribed-warning {
+    color: #ffcc00; /* A gold/yellow color for warnings */
+    font-style: italic;
+}
+
+/* .recovered-word {color: #86d0dd;} */
+
+/* This existing rule will correctly override the color when a recovered word is censored */
+.word-toggle.censored {
+    color: #d32f2f;
+    text-decoration: line-through;
+}
+
+/* Styles for Methodology Page */
+/* ------------------------- */
+.methodology-card {
+    background-color: #1e1e1e; /* Darker background for the card */
+    border: 2px solid #444;    /* Subtle border */
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.methodology-card h4 {
+    color: #00695c; /* Highlight card titles with a readable accent color */
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+}
+.methodology-card p {
+    color: #e0e0e0; /* Consistent text color */
+    line-height: 1.6;
+}
+
+
+
+/* =================================== */
+/* Code Block Formatting               */
+/* =================================== */
+
+pre {
+  background-color: #1e1e1e; /* Matches your dark card/form background */
+  color: #e0e0e0;            /* Soft white text for readability */
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  padding: 1.5rem;
+  border: 1px solid #444;    /* Subtle border, same as your tables */
+  border-radius: 8px;        /* Rounded corners */
+  overflow-x: auto;          /* Adds a scrollbar if code is too wide */
+}
+
+/* Ensures the <code> tag inside <pre> inherits the correct font */
+pre code {
+  font-family: inherit;
+  background: none; /* Prevents nested backgrounds */
+  padding: 0;
+}
+
+/* Style for inline <code> snippets (outside of <pre> blocks) */
+code {
+  background-color: #004d40; /* Dark teal accent color */
+  color: #ffffff;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 85%;
 }

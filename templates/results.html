@@ -1,6 +1,7 @@
 {%- macro format_time(seconds) -%}
-  {% set minutes = seconds|int // 60 %}
-  {% set remaining_seconds = (seconds|round|int) % 60 %}
+  {% set total_seconds = seconds|int %}
+  {% set minutes = total_seconds // 60 %}
+  {% set remaining_seconds = total_seconds % 60 %}
   {% if remaining_seconds < 10 %}
     {{- minutes -}}:0{{- remaining_seconds -}}
   {% else %}
@@ -93,16 +94,25 @@
                         </thead>
                         <tbody>
                             {% for segment in result.transcript %}
-                            <tr>
-                                <td>{{ format_time(segment.start) }} - {{ format_time(segment.end) }}</td>
-                                <td>
-                                    {% for word in segment.line_words %}
-                                        <span class="word-toggle" data-word-id="{{ word.id|tojson }}">
-                                            {{ word.text }}
-                                        </span>
-                                    {% endfor %}
-                                </td>
-                            </tr>
+                                {% set row_class = 'untranscribed-warning-row' if segment.type == 'untranscribed_final' else '' %}
+                                <tr class="{{ row_class }}">
+                                    <td>{{ format_time(segment.start) }} - {{ format_time(segment.end) }}</td>
+                                    
+                                    {% if segment.type == 'speech' or segment.type == 'speech_recovered' %}
+                                        <td>
+                                            {% for word in segment.line_words %}
+                                                {# ADD a conditional class for recovered words #}
+                                                <span class="word-toggle {% if segment.type == 'speech_recovered' %}recovered-word{% endif %}" data-word-id="{{ word.id|tojson }}">
+                                                    {{ word.text }}
+                                                </span>
+                                            {% endfor %}
+                                        </td>
+                                    {% elif segment.type == 'untranscribed_final' %}
+                                        <td class="untranscribed-warning">
+                                            <em>Warning: Possible untranscribed audio in this segment</em>
+                                        </td>
+                                    {% endif %}
+                                </tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -124,12 +134,12 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Part 1: Read Data Safely
+        // Read Data Safely
         const dataDiv = document.getElementById('results-data');
         const resultsData = JSON.parse(dataDiv.dataset.results);
         // console.log("--- Frontend Received Data ---", resultsData); // Print data to console for debugging
 
-        // Part 2: Setup Clickable Words and Initial State
+        // Setup Clickable Words and Initial State
         const allWords = document.querySelectorAll('.word-toggle');
         allWords.forEach(wordSpan => {
             // Add the click listener to EVERY word first
@@ -177,7 +187,7 @@
             });
         });
 
-        // Part 4: Tab Switching Logic (Unchanged)
+        // Tab Switching Logic
         const fileItems = document.querySelectorAll('.file-item');
         const transcriptContents = document.querySelectorAll('.transcript-content');
         fileItems.forEach(item => {
@@ -193,8 +203,8 @@
             });
         });
 
-        const SESSION_DURATION_MIN = 30; // Must match backend (30 minutes)
-        const WARNING_TIME_MIN = 1;      // Show warning 1 minute before expiry
+        const SESSION_DURATION_MIN = 15; // Must match backend (15 minutes)
+        const WARNING_TIME_MIN = 2;      // Show warning 1 minute before expiry
 
         let sessionTimeoutHandle;
         let warningTimeoutHandle;

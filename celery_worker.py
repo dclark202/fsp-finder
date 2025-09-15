@@ -3,7 +3,7 @@ import os
 import shutil
 import time
 from celery import Celery
-from ml_logic import analyze_audio, process_transcription, calculate_wer, create_llm_chain
+from ml_logic import analyze_audio, process_transcription, calculate_wer, create_llm_chain, apply_censoring_logic, process_untranscribed_gaps
 import torch
 import whisper_timestamped as whisper
 import redis
@@ -17,6 +17,8 @@ LLM_CHAIN = None
 SHARED_ARTIFACTS_PATH = "/job_artifacts"
 EXPIRATION_HOURS = 2 # Files older than 2 hours will be deleted
 EXPIRATION_SECONDS = EXPIRATION_HOURS * 3600
+
+REDIS_SESSION_SECONDS = 900
 
 # Define a shared upload folder
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
@@ -36,7 +38,7 @@ celery_app.conf.beat_schedule = {
     },
 }
 
-# Same Redis client and the app.pu
+# Same Redis client and the app.py
 redis_client = redis.Redis(host='redis', port=6379, db=1, decode_responses=True)
 
 @celery_app.task(bind=True)
@@ -46,7 +48,7 @@ def analysis_task(self, file_path: str, profanity_list: str, use_vad: bool, llm_
     This runs in a separate Celery worker process.
     """
     job_id = self.request.id
-    redis_client.setex(f"status_{job_id}", 3600, "processing")
+    redis_client.setex(f"status_{job_id}", REDIS_SESSION_SECONDS, "processing")
 
     global WHISPER_MODEL, LLM_CHAIN
     analysis_state = {}
@@ -65,25 +67,52 @@ def analysis_task(self, file_path: str, profanity_list: str, use_vad: bool, llm_
             print("CELERY WORKER: LLM loaded successfully.")
         llm_chain_to_pass = LLM_CHAIN
 
-    analysis_state = {}
-
     analysis_state = analyze_audio(file_path, WHISPER_MODEL, DEVICE, use_vad=use_vad)
+    initial_transcript = process_transcription(analysis_state['transcription_result'])
+
+    # Add a 'type' to existing speech segments
+    for segment in initial_transcript:
+        segment['type'] = 'speech'
+
+    print('Checking for unprocessed vocals ...')
+
+    final_gap_segments = process_untranscribed_gaps(
+        audio_path=analysis_state['vocals_path'],
+        transcription_result=analysis_state['transcription_result'],
+        whisper_model=WHISPER_MODEL,
+        device=DEVICE
+    )
+
+    # Combine the two lists and sort by start time to create a complete timeline
+    full_timeline = sorted(
+        initial_transcript + final_gap_segments,
+        key=lambda x: x['start']
+    )
     
-    processed_data = process_transcription(
-        analysis_state['transcription_result'], 
-        llm_chain=llm_chain_to_pass,
+    # for item in full_timeline:
+    #     print(item)
+
+    ids_to_mute = apply_censoring_logic(
+        transcript=full_timeline,
+        llm_chain=llm_chain_to_pass, 
         profanity_list=profanity_list
     )
 
-    analysis_state.update(processed_data)
+    # Add the ids to mute
+    analysis_state['initial_explicit_ids'] = ids_to_mute
 
-    transcript_text = " ".join([word['text'] for seg in analysis_state['transcript'] for word in seg['line_words']])
+    # Add the full transcript
+    analysis_state['transcript'] = full_timeline
+
+    transcript_text = " ".join([seg['line_text'] for seg in analysis_state['transcript'] if seg.get('type') in ['speech', 'speech_recovered']])
     analysis_state['metadata']['wer_score'] = calculate_wer(analysis_state['metadata']['genius_lyrics'], transcript_text)
 
-    del analysis_state['transcription_result'] 
+    # Clean up the large, raw result before sending it back
+    del analysis_state['transcription_result']
     
     print(f"CELERY TASK: Analysis complete for {file_path}")
-    return analysis_state 
+    return analysis_state
+
 
 @celery_app.task
 def cleanup_stale_files():
@@ -91,7 +120,7 @@ def cleanup_stale_files():
     print(f"--- Running scheduled cleanup: Deleting files older than {EXPIRATION_HOURS} hours ---")
     now = time.time()
 
-    # 1. Clean up job artifact directories (/job_artifacts)
+    # Clean up job artifact directories (/job_artifacts)
     if os.path.exists(SHARED_ARTIFACTS_PATH):
         for dirname in os.listdir(SHARED_ARTIFACTS_PATH):
             dirpath = os.path.join(SHARED_ARTIFACTS_PATH, dirname)
@@ -105,7 +134,7 @@ def cleanup_stale_files():
                 except FileNotFoundError:
                     continue # File might have been deleted by a parallel process
 
-    # 2. Clean up original uploads (/app/uploads)
+    # Clean up original uploads (/app/uploads)
     if os.path.exists(UPLOAD_FOLDER):
         for filename in os.listdir(UPLOAD_FOLDER):
             filepath = os.path.join(UPLOAD_FOLDER, filename)

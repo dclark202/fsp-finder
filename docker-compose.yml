@@ -27,6 +27,7 @@ services:
       - app_data:/app/uploads
       - training_data:/app/training_data
       - job_artifacts:/job_artifacts
+      - model_cache:/model-cache
     depends_on:
       - redis
 
@@ -49,6 +50,7 @@ services:
       - app_data:/app/uploads
       - training_data:/app/training_data
       - job_artifacts:/job_artifacts
+      - model_cache:/model-cache
     depends_on:
       - redis
     deploy:
@@ -74,6 +76,7 @@ services:
       - .:/app
       - app_data:/app/uploads
       - job_artifacts:/job_artifacts
+      - model_cache:/model-cache
     depends_on:
       - redis
 
@@ -82,3 +85,4 @@ volumes:
   app_data:
   training_data:
   job_artifacts:
+  model_cache:
