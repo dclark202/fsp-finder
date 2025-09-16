@@ -31,9 +31,11 @@
         Here's where you can help: <b>Please click to censor any additional explicit content (drug references, sexual themes, etc.) you find in the transcript.</b>
         This additional information on what type of content should be censored will help us build a better model for detecting this content automatically. </p>
 
-      <p><b>Warning</b> Whisper's transcription can fail. If you find that a portion of the lyrics has not been transcribed correctly/at all, please consider running the tool again on that song.
+      <p><b>Warning</b>: Whisper's transcription can fail. If you find that a portion of the lyrics has not been transcribed correctly, please consider running the tool again on that song. 
+        
+        You will see <span style="color: #ffcc00;"><em>Warning: Possible untranscribed audio in this segment</em></span> if Whisper is unable to transcribe the vocals in a given segment
       
-      Always check your edited files against an official source to make sure all of the desired explicit content has been detected and censored.    
+        Always check your edited files against an official source to make sure all of the desired explicit content has been detected and censored.    
       </p>
 
     <hr>
@@ -48,12 +50,6 @@
                     </li>
                 {% endfor %}
             </ul>
-
-            <a href="{{ request.url_for('index') }}" 
-              class="btn-secondary" 
-              onclick="return confirm('Are you sure you want to return home? All current analysis and edits will be lost.');">
-              Return to Home
-            </a>
         </div>
 
         <div class="right-column">
@@ -121,6 +117,14 @@
         </div>
     </div>
     
+    <p>
+        <a href="{{ request.url_for('index') }}" 
+            class="btn-secondary" 
+            onclick="return confirm('Are you sure you want to return home? All current analysis and edits will be lost.');">
+            Return to home
+        </a>
+    </p>
+
     <footer>
         <hr>
         <p>

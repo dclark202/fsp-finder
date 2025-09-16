@@ -12,11 +12,6 @@
     <h6>AI-powered Foul Speech Pattern detector and automatic music censoring tool</h6>
 
     <hr>
-    <p>
-        <b>Thank you</b> for being among the first to try the public release of FSP Finder. 
-        If you run into any problems, or have feedback about the tool, please contact us using <a href="{{ request.url_for('contact') }}">this form</a>.
-        User feedback is greatly appreciated and will help us build a better program over time.
-    </p>
 
     <h4>How to use this tool</h4> 
     <ul>
@@ -24,7 +19,7 @@
       <li>Click the <b>Process audio</b> button to create the transcriptions of the uploaded track(s). You will have a chance to review the edits before applying the censoring</li>
     </ul>
     
-    <p><b><a href="{{ request.url_for('methodology') }}">Read more about how this tool works</a></b></p>
+    <p><b><a href="{{ request.url_for('methodology') }}">Read more about how FSP Finder works</a></b></p>
 
    <form action="/analyze" method="post" enctype="multipart/form-data" class="upload-form" novalidate>
       
