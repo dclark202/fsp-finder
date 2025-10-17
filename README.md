@@ -41,7 +41,7 @@ Follow these instructions to set up and run the application locally using Docker
 
     # (Optional) For using the LLM to detect edge case explicit content
     # Requires access to Google Gemma 2
-    HUGGING_FACE_HUB_TOKEN=YOUR_HF_TOKEN
+    HF_TOKEN=YOUR_HF_TOKEN
     ```
 
 4.  **Build and Run with Docker Compose:**
