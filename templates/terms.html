@@ -4,8 +4,18 @@
     <meta charset="UTF-8">
     <title>Terms of Service - FSP Finder</title>
     <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" type="text/css">
-    <link rel="stylesheet" href="{{ request.url_for('static', path='style.css') }}">
+    <link rel="stylesheet" href="/static/style.css">
     <link rel="icon" href="{{ request.url_for('static', path='favicon.png') }}">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CZKZ8Q5K0L"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-CZKZ8Q5K0L');
+    </script>
 </head>
 <body>
     <h3>Terms of Service</h3>
@@ -34,7 +44,8 @@
         <p>
             &copy; 2025 FSP Finder | 
             <a href="https://github.com/dclark202/fsp-finder">View project on GitHub</a> |
-            <a href="{{ request.url_for('contact') }}">Contact us</a>
+            <a href="{{ request.url_for('contact') }}">Contact us</a> |
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSdOvdQDE3ZMhtWG9QhkJ7ysQgn9BuiAUIRzyDL8rpWX0w_DhA/viewform?usp=sharing&ouid=104381324099973996341">Join the mailing list</a>
         </p>
     </footer>
 </body>

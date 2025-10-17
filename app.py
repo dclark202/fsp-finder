@@ -1,6 +1,7 @@
 import os
 import json
 import shutil
+import traceback
 from typing import List, Optional
 
 # API
@@ -33,7 +34,7 @@ class FinalizeRequest(BaseModel):
     job_id: str
     ids_to_censor: List[List[int]] = None 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
@@ -67,8 +68,10 @@ async def handle_contact_form(name: str = Form(...), email: str = Form(...), mes
         sg.send(email_message)
         
         return JSONResponse({'status': 'success', 'message': 'Thank you for your message!'})
+    
     except Exception as e:
-        print(e)
+        print("--- AN ERROR OCCURRED IN THE /contact ENDPOINT ---")
+        traceback.print_exc() # This will print the full, detailed error traceback
         return JSONResponse({'status': 'error', 'message': 'An error occurred.'}, status_code=500)
 
 # --- Core Application API Endpoints ---

@@ -3,3 +3,10 @@ uploads/
 train_data/
 .env
 celerybeat-schedule.db
+
+# For webhosting
+acme-challenge/
+nginx.conf
+
+# General old files
+temp/

@@ -4,8 +4,18 @@
     <meta charset="UTF-8">
     <title>Methodology - FSP Finder</title>
     <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" type="text/css">
-    <link rel="stylesheet" href="{{ request.url_for('static', path='style.css') }}">
+    <link rel="stylesheet" href="/static/style.css">
     <link rel="icon" type="image/png" href="{{ url_for('static', path='/favicon.png') }}">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CZKZ8Q5K0L"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-CZKZ8Q5K0L');
+    </script>
 </head>
 <body>
     <header>
@@ -42,8 +52,8 @@
                     
                     <br><Br>
 
-                    We additionally include a second-pass approach for ensuring that all vocals are transcribed. Any untranscribed gap in the vocals transcript is rerun through Whisper with more generous computation metrics if it is detected to have any audio (average dB rating greater than -30). 
-                    Any remaining gaps after the second pass are flagged with a warning.
+                    We additionally include a second-pass approach for ensuring that all vocals are transcribed. Any untranscribed gap in the vocals transcript is rerun through Whisper, with more generous computation metrics, if it is detected to have any audio (average dB rating greater than -30). 
+                    Any remaining untranscribed gaps after the second pass are flagged with a warning.
                 </p>
             </div>
 
@@ -59,11 +69,10 @@
                 <p>
                     For the core task of identifying explicit or profane content, the transcribed text is analyzed by <a href="https://blog.google/technology/developers/gemma-open-models/" target="_blank">Gemma</a>, Google's lightweight, state-of-the-art open large language model. We utilize a quantized version of the Gemma 9B instruction-tuned model. 
                     The LLM is prompted with specific instructions to act as an AI content moderator, identifying phrases that would be considered "indecent" or "profane" under broadcast standards, while also considering context to avoid false positives. 
-                    This advanced contextual understanding is crucial for nuanced content moderation. 
             
                     <br><br>
 
-                    Use of this tool contributes to gathering training data to fine tune this model for more sensitive explicit content detetion.
+                    This portion of the tool is currently deactivated as we gather training data to better fine tune the model for appropriate content moderation. Your use of this tool is an important step in building a more robust censoring system in the future.
                 </p>
             </div>
 
@@ -75,7 +84,7 @@
                     This dual-layer approach—combining the nuanced understanding of a large language model with explicit keyword matching—ensures comprehensive coverage and reduces the chances of explicit content slipping through.
 
                     <details>
-                        <summary>Click to see a list of automatically flagged words <span style="color: #ffcc00">(CONTENT WARNING: profanity, racial slurs)</span></summary>
+                        <summary>Click to see a list of automatically flagged words <span style="color: #ffcc00">(CONTENT WARNING: profanity, racial slurs, generally offensive content...)</span></summary>
                         <br>
                         <p>
                             <b>Any word that contains the following as a <em>substring</em>:</b> <br>
@@ -123,7 +132,8 @@
         <p>
             &copy; 2025 FSP Finder | 
             <a href="https://github.com/dclark202/fsp-finder">View project on GitHub</a> |
-            <a href="{{ request.url_for('contact') }}">Contact us</a>
+            <a href="{{ request.url_for('contact') }}">Contact us</a> |
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSdOvdQDE3ZMhtWG9QhkJ7ysQgn9BuiAUIRzyDL8rpWX0w_DhA/viewform?usp=sharing&ouid=104381324099973996341">Join the mailing list</a>
         </p>
     </footer>
     

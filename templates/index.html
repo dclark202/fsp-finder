@@ -4,19 +4,43 @@
     <meta charset="UTF-8">
     <title>FSP Finder - Upload</title>
     <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" type="text/css">
-    <link rel="stylesheet" href="{{ request.url_for('static', path='style.css') }}">
+    <link rel="stylesheet" href="/static/style.css">
     <link rel="icon" href="{{ request.url_for('static', path='favicon.png') }}">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CZKZ8Q5K0L"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-CZKZ8Q5K0L');
+    </script>
 </head>
 <body>
-    <h1>FSP Finder</h1> 
-    <h6>AI-powered Foul Speech Pattern detector and automatic music censoring tool</h6>
+    <header>
+        <b style="font-size: 36px;">FSP Finder</b> &nbsp; <b style="color: #555; font-size: 32px;">AI-powered music censoring tool</b>
+    </header>
 
     <hr>
 
+    <!-- Message of the day -->
+    <!-- <div style="border: 2px solid #ffd000; padding: 10px; width: 900px; border-radius: 8px;">
+        <p><b>
+            Thank you for being among the first to try the public release of FSP Finder. 
+            If you run into any problems, or have feedback about the tool, please contact us using <a href="{{ request.url_for('contact') }}">this form</a>.
+            User feedback is greatly appreciated and will help us build a better program over time.
+            
+            <br><br>
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSdOvdQDE3ZMhtWG9QhkJ7ysQgn9BuiAUIRzyDL8rpWX0w_DhA/viewform?usp=sharing&ouid=104381324099973996341">Click here</a> to sign up for our mailing list to stay up to date on new features
+        </b></p>
+    </div> -->
+
+
     <h4>How to use this tool</h4> 
     <ul>
-      <li>Upload one or more audio files using the box below. Most common audio formats are accepted (e.g., .mp3, .wav, etc.)</li>
-      <li>Click the <b>Process audio</b> button to create the transcriptions of the uploaded track(s). You will have a chance to review the edits before applying the censoring</li>
+      <li>Upload one or more audio files using the box below. Most common audio formats are accepted (e.g., <code>.mp3</code>, <code>.wav</code>, etc.)</li>
+      <li>Click the <b>Process audio</b> button to create the transcriptions of the uploaded track(s). You will have a chance to review the edits before applying the censoring.</li>
     </ul>
     
     <p><b><a href="{{ request.url_for('methodology') }}">Read more about how FSP Finder works</a></b></p>
@@ -44,8 +68,8 @@
               <small>Improves transcription by removing silence and non-speech sections from the vocals stem. Try disabling if you detect large portions of vocals are missing transcriptions.</small>
               
               <label for="llm-detection">Enable LLM content analysis</label>
-              <input type="checkbox" id="llm-detection" name="llm_detection" value="true">
-              <small>(Experimental) Uses a large language model to flag additional case dependent explicit content. <b>Selecting this will increase processing times</b></small>
+              <input type="checkbox" id="llm-detection" name="llm_detection" value="true" disabled>
+              <small>(Experimental) Uses a large language model to flag additional case dependent explicit content. <b>Selecting this will increase processing times -- currently disabled</b></small>
           </div>
       </div>
 
@@ -53,7 +77,10 @@
       <button type="submit" class="process-button">Process audio</button>
     </form>
     
-    <p><b>Please note</b>: By using this tool, you are agreeing to our <a href="{{ request.url_for('terms') }}">Terms of Service</a></p>
+    <br>
+
+
+    <p><b>Please note</b>: By using this tool, you are agreeing to our <a href="{{ request.url_for('terms') }}">Terms of service</a></p>
 
     <div id="loading-overlay" class="hidden">
         <div class="loading-box">
@@ -73,8 +100,8 @@
         <p>
             &copy; 2025 FSP Finder | 
             <a href="https://github.com/dclark202/fsp-finder">View project on GitHub</a> |
-            <a href="{{ request.url_for('contact') }}">Contact us</a>
-        </p>
+            <a href="{{ request.url_for('contact') }}">Contact us</a> |
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSdOvdQDE3ZMhtWG9QhkJ7ysQgn9BuiAUIRzyDL8rpWX0w_DhA/viewform?usp=sharing&ouid=104381324099973996341">Join the mailing list</a>
     </footer>
 
     <script>
