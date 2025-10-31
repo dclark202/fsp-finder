@@ -382,8 +382,10 @@ details ul {
 
 .download-controls {
   display: flex;
-  align-items: center; /* Vertically aligns the button, label, and dropdown */
+  flex-direction: column; /* Stack the two groups vertically */
+  align-items: flex-start; /* Align them to the left */
   margin-top: 15px;
+  gap: 1rem; /* This adds 1rem of space between the two lines */
 }
 
 .download-controls label {

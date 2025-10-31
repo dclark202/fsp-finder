@@ -28,23 +28,31 @@
     </script>
 </head>
 <body>
-    <h4>Review transcript(s) and apply edits</h4>    
+    <header>
+        <b style="font-size: 36px;">FSP Finder</b> &nbsp; <b style="color: #7e7e7e; font-size: 32px;">AI-powered music censoring tool</b>
+    </header>
+
+    <hr>
+
+    <h5>Review and make edits:</h5>    
       <ul>
         <li>Words to be censored will appear in <s>red strikethrough</s> text in the transcript below</li>
         <li>If you've uploaded more than one song, use the list on the left to switch between transcripts</li>
-        <li>Click on a word in the transcript to toggle its censored status</li>
+        <li>Click on a word in the transcript to toggle its censoring status</li>
         <li>Once you are satisfied with the edits, click <b><code>Apply edits and download this track</code></b> to download your track. You can download the same song multiple times if you want to make additional edits.</li>
       </ul>
       
-      <p><b>Note</b> Currently only profanity and some select slurs will be automatically detected. 
-        Here's where you can help: <b>Please click to censor any additional explicit content (drug references, sexual themes, etc.) you find in the transcript.</b>
-        This additional information on what type of content should be censored will help us build a better model for detecting this content automatically. </p>
+      <!-- <p><b>Note</b>: Currently only profanity and some select slurs will be automatically detected. 
+        <b>Please click to censor any additional explicit content (drug references, sexual themes, etc.) you find in the transcript.</b>
+        This additional information on what type of content should be censored will help us build a better model for detecting this content automatically. </p> -->
 
-      <p><b>Warning</b>: Whisper's transcription can fail. If you find that a portion of the lyrics has not been transcribed correctly, please consider running the tool again on that song. 
+      <h5>Warning: Whisper's transcription is not fool-proof! </h5>
+        <ul>
+            <li>You will see "<span style="color: #ffcc00;"><em>Warning: Possible untranscribed audio in this segment</em></span>" if Whisper is unable to detect the vocals in a given segment.</li>
+            <li>If you are not satisfied with the transcription, try running the tool again. There is an element of randomness to the process, each time may be different.</li>
+            <li>Always check your edited files against an official source to make sure all of the desired explicit content has been detected and censored.</li>
+        </ul>    
         
-        You will see <span style="color: #ffcc00;"><em>Warning: Possible untranscribed audio in this segment</em></span> if Whisper is unable to transcribe the vocals in a given segment
-      
-        Always check your edited files against an official source to make sure all of the desired explicit content has been detected and censored.    
       </p>
 
     <hr>
@@ -79,7 +87,7 @@
 
                       {# This block adds the similarity score if both the score and URL exist #}
                       {% if result.metadata.wer_score and result.metadata.genius_url %}
-                          | similarity score = {{ result.metadata.wer_score }} (lower is better)
+                          | similarity score = {{ result.metadata.wer_score }} <a target="_blank" href="https://en.wikipedia.org/wiki/Word_error_rate"> (what does this mean?) </a>
                       {% endif %}
                     </p>
           
@@ -88,16 +96,18 @@
                         <input type="hidden" name="ids_to_censor" value="">
                         
                         <div class="download-controls">
-                            Select file format: 
-                            <select name="format" id="format-select-{{ result.job_id }}">
-                                <option value="mp3" selected>mp3 (256k)</option>
-                                <option value="wav">WAV</option>
-                                <option value="flac">FLAC</option>
-                            </select>
-                            
-                            <br>
 
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                Select file format: 
+                                <select name="format" id="format-select-{{ result.job_id }}">
+                                    <option value="mp3" selected>mp3 (256kbps)</option>
+                                    <option value="wav">WAV</option>
+                                    <option value="flac">FLAC</option>
+                                </select>
+                            </div>
+                            
                             <button type="submit">Apply edits and download this track</button>
+
                         </div>
                     </form>
 
