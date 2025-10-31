@@ -6,24 +6,24 @@ services:
     ports:
       - "6379:6379"
 
-# --- Public entry point ---
-  nginx:
-    image: nginx:alpine
-    restart: unless-stopped
-    ports:
-      # Expose HTTP and HTTPS ports to the host machine
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      # Mount your SSL certificates from the host into the container
-      - C:/tools/win-acme:/etc/letsencrypt/live:ro # CHANGED: Map your cert folder
-      # Mount a volume for Let's Encrypt challenges
-      - C:/Users/dacla/Documents/gh/fsp-finder/acme-challenge:/var/www/certbot
-      # Mount the application's static files for Nginx to serve directly
-      - .:/app  # Assuming static files are in ./static
-    depends_on:
-      - web
+# # --- Public entry point ---
+#   nginx:
+#     image: nginx:alpine
+#     restart: unless-stopped
+#     ports:
+#       # Expose HTTP and HTTPS ports to the host machine
+#       - "80:80"
+#       - "443:443"
+#     volumes:
+#       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+#       # Mount your SSL certificates from the host into the container
+#       - C:/tools/win-acme:/etc/letsencrypt/live:ro # CHANGED: Map your cert folder
+#       # Mount a volume for Let's Encrypt challenges
+#       - C:/Users/dacla/Documents/gh/fsp-finder/acme-challenge:/var/www/certbot
+#       # Mount the application's static files for Nginx to serve directly
+#       - .:/app  # Assuming static files are in ./static
+#     depends_on:
+#       - web
 
   # --- FastAPI Web Server Service ---
   web:
@@ -35,6 +35,8 @@ services:
         - HF_TOKEN=${HF_TOKEN}
     restart: unless-stopped
     command: uvicorn app:app --host 0.0.0.0 --port 8000 --proxy-headers # --reload
+    ports:
+      - "8000:8000"
     env_file:
       - .env
     volumes:
