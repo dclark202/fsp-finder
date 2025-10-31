@@ -84,11 +84,13 @@ def silence_audio_segment(input_audio_path, output_audio_path, times):
 
 
 # For combining the vocals and instrument stems once the censoring has been applied
-def combine_audio(path1, path2, outpath):
+def combine_audio(path1, path2, outpath, format='mp3'):
     audio1 = AudioSegment.from_file(path1, format='wav')
     audio2 = AudioSegment.from_file(path2, format='wav')
     combined_audio = audio1.overlay(audio2)
-    combined_audio.export(outpath, format="mp3")
+
+    if format == 'mp3': combined_audio.export(outpath, bitrate="256k", format=format)
+    else: combined_audio.export(outpath, format=format)
 
 
 # Extracts metadata from the original song
@@ -346,7 +348,7 @@ def apply_censoring_logic(transcript: List[dict], llm_chain=None, profanity_list
     return ids_to_mute
 
 
-def apply_censoring(analysis_state, ids_to_censor):
+def apply_censoring(analysis_state, ids_to_censor, format='mp3'):
     if not ids_to_censor: return None
     
     ids_set = {tuple(item) for item in ids_to_censor}
@@ -363,9 +365,9 @@ def apply_censoring(analysis_state, ids_to_censor):
     silence_audio_segment(analysis_state['vocals_path'], silenced_vocals_path, times_in_ms)
     
     base_name = os.path.splitext(analysis_state['original_filename'])[0]
-    output_path = os.path.join(analysis_state['temp_dir'], f"{base_name}-edited.mp3")
+    output_path = os.path.join(analysis_state['temp_dir'], f"{base_name}-edited.{format}")
 
-    combine_audio(silenced_vocals_path, analysis_state['no_vocals_path'], output_path)
+    combine_audio(silenced_vocals_path, analysis_state['no_vocals_path'], output_path, format=format)
     transfer_metadata(analysis_state['original_audio_path_copy'], output_path)
 
     return output_path

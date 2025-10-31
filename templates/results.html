@@ -33,7 +33,7 @@
         <li>Words to be censored will appear in <s>red strikethrough</s> text in the transcript below</li>
         <li>If you've uploaded more than one song, use the list on the left to switch between transcripts</li>
         <li>Click on a word in the transcript to toggle its censored status</li>
-        <li>Once you are satisfied with the edits, click <b>Apply edits and download this track</b> to download your track</li>. You can download the same song multiple times if you want to make additional edits.
+        <li>Once you are satisfied with the edits, click <b><code>Apply edits and download this track</code></b> to download your track. You can download the same song multiple times if you want to make additional edits.</li>
       </ul>
       
       <p><b>Note</b> Currently only profanity and some select slurs will be automatically detected. 
@@ -83,10 +83,22 @@
                       {% endif %}
                     </p>
           
-                    <form action="/finalize" method="post" class="download-form">
+                   <form action="/finalize" method="post" class="download-form">
                         <input type="hidden" name="job_id" value="{{ result.job_id }}">
                         <input type="hidden" name="ids_to_censor" value="">
-                        <button type="submit">Apply edits and download this track</button>
+                        
+                        <div class="download-controls">
+                            Select file format: 
+                            <select name="format" id="format-select-{{ result.job_id }}">
+                                <option value="mp3" selected>mp3 (256k)</option>
+                                <option value="wav">WAV</option>
+                                <option value="flac">FLAC</option>
+                            </select>
+                            
+                            <br>
+
+                            <button type="submit">Apply edits and download this track</button>
+                        </div>
                     </form>
 
                     <h5>Transcript</h5>
@@ -217,6 +229,7 @@
             });
         });
 
+            
         const SESSION_DURATION_MIN = 15; // Must match backend (15 minutes)
         const WARNING_TIME_MIN = 2;      // Show warning 1 minute before expiry
 

@@ -379,3 +379,23 @@ details ul {
   margin-top: 0.5rem;
   margin-bottom: 0;
 }
+
+.download-controls {
+  display: flex;
+  align-items: center; /* Vertically aligns the button, label, and dropdown */
+  margin-top: 15px;
+}
+
+.download-controls label {
+  margin-left: 20px; /* Adds space between button and label */
+  margin-right: 10px; /* Adds space between label and dropdown */
+  margin-bottom: 0;   /* Resets default label margin */
+}
+
+/* Make the dropdown menu compact */
+.download-controls select {
+  display: inline-block;
+  width: auto;
+  padding: 8px; /* Optional: make it a bit smaller than default */
+  margin: 0;
+}

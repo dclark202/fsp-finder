@@ -160,7 +160,7 @@ async def keep_alive(job_id: str = Path(...)):
 
 
 @app.post("/finalize")
-async def finalize_file(job_id: str = Form(...), ids_to_censor: str = Form(...)):
+async def finalize_file(job_id: str = Form(...), ids_to_censor: str = Form(...), format: str = Form("mp3")):
     cached_result_json = redis_client.get(job_id)
 
     if not cached_result_json:
@@ -196,7 +196,7 @@ async def finalize_file(job_id: str = Form(...), ids_to_censor: str = Form(...))
     except Exception as e:
          print(f"ERROR: Could not save training data for job {job_id}. Reason: {e}")
 
-    output_path = apply_censoring(analysis_state, final_ids_to_censor)
+    output_path = apply_censoring(analysis_state, final_ids_to_censor, format=format)
     
     if not output_path:
         raise HTTPException(status_code=400, detail="No content was marked for censoring.")
@@ -206,7 +206,7 @@ async def finalize_file(job_id: str = Form(...), ids_to_censor: str = Form(...))
     # Return the file, passing the cleanup task to be run AFTER the response is sent
     return FileResponse(
         path=output_path, 
-        media_type='audio/mpeg', 
+        media_type=('audio/mpeg' if format == 'mp3' else 'audio/wav'), 
         filename=os.path.basename(output_path),
         # background=tasks  
     )
