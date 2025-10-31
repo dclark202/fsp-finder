@@ -61,7 +61,7 @@ Follow these instructions to set up and run the application locally using Docker
 docker-compose up -d
 ```
 
-FSP Finder is then available for local use by navigating to `http://localhost/` in your web-browser of choice.
+FSP Finder is then available for local use by navigating to `http://localhost:8000` in your web-browser of choice.
 
 **To stop the service**: 
 ```bash
